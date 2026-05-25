@@ -6,43 +6,93 @@ if (!isset($_SESSION['username'])) {
 }
 include 'config/koneksi.php';
 
+// Error handling for database operations
 if (isset($_POST['tambah'])) {
-    $id_kelas = $_POST['id_kelas'];
-    $nama_kelas = $_POST['nama_kelas'];
-    $komp_keahlian = $_POST['komp_keahlian'];
+    $id_kelas = mysqli_real_escape_string($conn, $_POST['id_kelas']);
+    $nama_kelas = mysqli_real_escape_string($conn, $_POST['nama_kelas']);
+    $komp_keahlian = mysqli_real_escape_string($conn, $_POST['komp_keahlian']);
     
-    $query = "INSERT INTO tb_kelas VALUES ('$id_kelas', '$nama_kelas', '$komp_keahlian')";
-    mysqli_query($conn, $query);
-    header("Location: kelas.php");
+    // Check if ID already exists
+    $check_query = "SELECT * FROM tb_kelas WHERE id_kelas = '$id_kelas' OR nama_kelas = '$nama_kelas'";
+    $check_result = mysqli_query($conn, $check_query);
+    
+    if (mysqli_num_rows($check_result) > 0) {
+        $existing = mysqli_fetch_assoc($check_result);
+        if ($existing['id_kelas'] == $id_kelas) {
+            $_SESSION['error'] = "ID Kelas '$id_kelas' sudah terdaftar!";
+        } else {
+            $_SESSION['error'] = "Nama Kelas '$nama_kelas' sudah terdaftar!";
+        }
+        header("Location: kelas.php");
+        exit();
+    } else {
+        $query = "INSERT INTO tb_kelas (id_kelas, nama_kelas, komp_keahlian) VALUES ('$id_kelas', '$nama_kelas', '$komp_keahlian')";
+        if (mysqli_query($conn, $query)) {
+            $_SESSION['success'] = "Data kelas berhasil ditambahkan!";
+        } else {
+            $_SESSION['error'] = "Gagal menambahkan data: " . mysqli_error($conn);
+        }
+        header("Location: kelas.php");
+        exit();
+    }
 }
 
 if (isset($_POST['edit'])) {
-    $id_kelas = $_POST['id_kelas'];
-    $nama_kelas = $_POST['nama_kelas'];
-    $komp_keahlian = $_POST['komp_keahlian'];
+    $id_kelas = mysqli_real_escape_string($conn, $_POST['id_kelas']);
+    $nama_kelas = mysqli_real_escape_string($conn, $_POST['nama_kelas']);
+    $komp_keahlian = mysqli_real_escape_string($conn, $_POST['komp_keahlian']);
     
-    $query = "UPDATE tb_kelas SET nama_kelas='$nama_kelas', komp_keahlian='$komp_keahlian' WHERE id_kelas='$id_kelas'";
-    mysqli_query($conn, $query);
-    header("Location: kelas.php");
+    // Check if new nama_kelas already exists for different ID
+    $check_query = "SELECT * FROM tb_kelas WHERE nama_kelas = '$nama_kelas' AND id_kelas != '$id_kelas'";
+    $check_result = mysqli_query($conn, $check_query);
+    
+    if (mysqli_num_rows($check_result) > 0) {
+        $_SESSION['error'] = "Nama Kelas '$nama_kelas' sudah digunakan oleh kelas lain!";
+        header("Location: kelas.php");
+        exit();
+    } else {
+        $query = "UPDATE tb_kelas SET nama_kelas='$nama_kelas', komp_keahlian='$komp_keahlian' WHERE id_kelas='$id_kelas'";
+        if (mysqli_query($conn, $query)) {
+            $_SESSION['success'] = "Data kelas berhasil diupdate!";
+        } else {
+            $_SESSION['error'] = "Gagal mengupdate data: " . mysqli_error($conn);
+        }
+        header("Location: kelas.php");
+        exit();
+    }
 }
 
 // Get data for edit
 $edit_data = null;
 if (isset($_GET['edit_id'])) {
-    $id = $_GET['edit_id'];
+    $id = mysqli_real_escape_string($conn, $_GET['edit_id']);
     $query = "SELECT * FROM tb_kelas WHERE id_kelas='$id'";
     $result = mysqli_query($conn, $query);
     $edit_data = mysqli_fetch_assoc($result);
 }
 
 if (isset($_GET['hapus'])) {
-    $id = $_GET['hapus'];
-    mysqli_query($conn, "DELETE FROM tb_kelas WHERE id_kelas='$id'");
+    $id = mysqli_real_escape_string($conn, $_GET['hapus']);
+    
+    // Check if class has students
+    $check_siswa = "SELECT * FROM tb_siswa WHERE id_kelas='$id'";
+    $result_siswa = mysqli_query($conn, $check_siswa);
+    
+    if (mysqli_num_rows($result_siswa) > 0) {
+        $_SESSION['error'] = "Tidak dapat menghapus kelas karena masih memiliki siswa!";
+    } else {
+        if (mysqli_query($conn, "DELETE FROM tb_kelas WHERE id_kelas='$id'")) {
+            $_SESSION['success'] = "Data kelas berhasil dihapus!";
+        } else {
+            $_SESSION['error'] = "Gagal menghapus data: " . mysqli_error($conn);
+        }
+    }
     header("Location: kelas.php");
+    exit();
 }
 
 // Search functionality
-$search = isset($_GET['search']) ? $_GET['search'] : '';
+$search = isset($_GET['search']) ? mysqli_real_escape_string($conn, $_GET['search']) : '';
 if ($search) {
     $query = "SELECT * FROM tb_kelas WHERE nama_kelas LIKE '%$search%' OR komp_keahlian LIKE '%$search%' OR id_kelas LIKE '%$search%' ORDER BY id_kelas ASC";
 } else {
@@ -61,6 +111,7 @@ $total_data = mysqli_num_rows(mysqli_query($conn, "SELECT * FROM tb_kelas"));
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        /* Your existing CSS styles remain the same */
         * {
             margin: 0;
             padding: 0;
@@ -262,6 +313,12 @@ $total_data = mysqli_num_rows(mysqli_query($conn, "SELECT * FROM tb_kelas"));
             font-size: 11px;
             font-weight: bold;
         }
+        
+        .alert-custom {
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
     </style>
 </head>
 <body>
@@ -297,6 +354,29 @@ $total_data = mysqli_num_rows(mysqli_query($conn, "SELECT * FROM tb_kelas"));
             
             <!-- Main Content -->
             <div class="col-md-10 p-4">
+                <!-- Display Alert Messages -->
+                <?php if (isset($_SESSION['success'])): ?>
+                    <div class="alert alert-success alert-dismissible fade show alert-custom animate" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <?php 
+                        echo $_SESSION['success'];
+                        unset($_SESSION['success']);
+                        ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <?php endif; ?>
+                
+                <?php if (isset($_SESSION['error'])): ?>
+                    <div class="alert alert-danger alert-dismissible fade show alert-custom animate" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <?php 
+                        echo $_SESSION['error'];
+                        unset($_SESSION['error']);
+                        ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <?php endif; ?>
+                
                 <!-- Header -->
                 <div class="d-flex justify-content-between align-items-center mb-4 animate">
                     <div>
@@ -344,7 +424,7 @@ $total_data = mysqli_num_rows(mysqli_query($conn, "SELECT * FROM tb_kelas"));
                                         </span>
                                         <input type="text" id="searchInput" class="form-control border-0" 
                                                placeholder="Cari kelas berdasarkan ID, Nama Kelas, atau Kompetensi Keahlian..." 
-                                               value="<?php echo $search; ?>">
+                                               value="<?php echo htmlspecialchars($search); ?>">
                                     </div>
                                 </div>
                             </div>
@@ -373,24 +453,24 @@ $total_data = mysqli_num_rows(mysqli_query($conn, "SELECT * FROM tb_kelas"));
                                         while ($row = mysqli_fetch_assoc($result)) {
                                     ?>
                                     <tr>
-                                        <td class="fw-bold"><?php echo $row['id_kelas']; ?></td>
-                                        <td><?php echo $row['nama_kelas']; ?></td>
+                                        <td class="fw-bold"><?php echo htmlspecialchars($row['id_kelas']); ?></td>
+                                        <td><?php echo htmlspecialchars($row['nama_kelas']); ?></td>
                                         <td>
                                             <i class="fas fa-code me-1 text-muted"></i>
-                                            <?php echo $row['komp_keahlian']; ?>
+                                            <?php echo htmlspecialchars($row['komp_keahlian']); ?>
                                          </td>
                                         <td class="text-center">
-                                            <button onclick="editKelas('<?php echo $row['id_kelas']; ?>', '<?php echo $row['nama_kelas']; ?>', '<?php echo $row['komp_keahlian']; ?>')" 
+                                            <button onclick="editKelas('<?php echo htmlspecialchars($row['id_kelas']); ?>', '<?php echo htmlspecialchars($row['nama_kelas']); ?>', '<?php echo htmlspecialchars($row['komp_keahlian']); ?>')" 
                                                     class="btn btn-warning btn-action" title="Edit">
                                                 <i class="fas fa-edit"></i>
                                             </button>
-                                            <a href="kelas.php?hapus=<?php echo $row['id_kelas']; ?>" 
+                                            <a href="kelas.php?hapus=<?php echo urlencode($row['id_kelas']); ?>" 
                                                class="btn btn-danger btn-action" 
-                                               onclick="return confirm('Yakin ingin menghapus data kelas ini?')" 
+                                               onclick="return confirm('Yakin ingin menghapus data kelas ini?\\n\\nPERINGATAN: Kelas tidak dapat dihapus jika masih memiliki siswa!')" 
                                                title="Hapus">
                                                 <i class="fas fa-trash"></i>
                                             </a>
-                                        </td>
+                                         </td>
                                     </tr>
                                     <?php 
                                         }
@@ -419,6 +499,7 @@ $total_data = mysqli_num_rows(mysqli_query($conn, "SELECT * FROM tb_kelas"));
             <div class="modal-content modal-content-custom">
                 <div class="modal-header-custom">
                     <h5 class="modal-title">
+                        <i class="fas fa-plus-circle me-2"></i>
                         Tambah Kelas Baru
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -427,7 +508,7 @@ $total_data = mysqli_num_rows(mysqli_query($conn, "SELECT * FROM tb_kelas"));
                     <form method="POST">
                         <div class="mb-3">
                             <label class="form-label fw-bold">
-                                ID Kelas
+                                ID Kelas <span class="text-danger">*</span>
                             </label>
                             <input type="text" name="id_kelas" class="form-control form-control-lg" 
                                    placeholder="Contoh: X-RPL-1" required>
@@ -435,24 +516,25 @@ $total_data = mysqli_num_rows(mysqli_query($conn, "SELECT * FROM tb_kelas"));
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold">
-                                Nama Kelas
+                                Nama Kelas <span class="text-danger">*</span>
                             </label>
                             <input type="text" name="nama_kelas" class="form-control form-control-lg" 
                                    placeholder="Contoh: X RPL 1" required>
+                            <small class="text-muted">Nama kelas harus unik (tidak boleh sama)</small>
                         </div>
                         <div class="mb-4">
                             <label class="form-label fw-bold">
-                                Kompetensi Keahlian
+                                Kompetensi Keahlian <span class="text-danger">*</span>
                             </label>
                             <input type="text" name="komp_keahlian" class="form-control form-control-lg" 
                                    placeholder="Contoh: Rekayasa Perangkat Lunak" required>
                         </div>
                         <div class="d-flex justify-content-end gap-2">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                Batal
+                                <i class="fas fa-times me-2"></i>Batal
                             </button>
                             <button type="submit" name="tambah" class="btn btn-primary">
-                                Simpan
+                                <i class="fas fa-save me-2"></i>Simpan
                             </button>
                         </div>
                     </form>
@@ -467,6 +549,7 @@ $total_data = mysqli_num_rows(mysqli_query($conn, "SELECT * FROM tb_kelas"));
             <div class="modal-content modal-content-custom">
                 <div class="modal-header-custom">
                     <h5 class="modal-title">
+                        <i class="fas fa-edit me-2"></i>
                         Edit Kelas
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -483,22 +566,23 @@ $total_data = mysqli_num_rows(mysqli_query($conn, "SELECT * FROM tb_kelas"));
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold">
-                                Nama Kelas
+                                Nama Kelas <span class="text-danger">*</span>
                             </label>
                             <input type="text" name="nama_kelas" id="edit_nama_kelas" class="form-control form-control-lg" required>
+                            <small class="text-muted">Nama kelas harus unik (tidak boleh sama dengan kelas lain)</small>
                         </div>
                         <div class="mb-4">
                             <label class="form-label fw-bold">
-                                Kompetensi Keahlian
+                                Kompetensi Keahlian <span class="text-danger">*</span>
                             </label>
                             <input type="text" name="komp_keahlian" id="edit_komp_keahlian" class="form-control form-control-lg" required>
                         </div>
                         <div class="d-flex justify-content-end gap-2">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                Batal
+                                <i class="fas fa-times me-2"></i>Batal
                             </button>
                             <button type="submit" name="edit" class="btn btn-primary">
-                                Update
+                                <i class="fas fa-save me-2"></i>Update
                             </button>
                         </div>
                     </form>
@@ -538,6 +622,15 @@ $total_data = mysqli_num_rows(mysqli_query($conn, "SELECT * FROM tb_kelas"));
             cards.forEach((card, index) => {
                 card.style.animationDelay = `${index * 0.1}s`;
             });
+            
+            // Auto close alerts after 5 seconds
+            setTimeout(function() {
+                const alerts = document.querySelectorAll('.alert');
+                alerts.forEach(function(alert) {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                });
+            }, 5000);
         });
     </script>
 </body>
