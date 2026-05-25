@@ -1,21 +1,21 @@
 # Aplikasi Web SPP Siswa
 
-Sistem informasi manajemen pembayaran SPP (Sumbangan Pembinaan Pendidikan) siswa berbasis web menggunakan PHP dan MySQL.
+Sistem informasi manajemen pembayaran SPP siswa berbasis web menggunakan PHP dan MySQL.
 
 ## Deskripsi
 
-Aplikasi ini digunakan untuk mengelola pembayaran SPP siswa, termasuk manajemen data master (kelas, SPP, petugas, siswa) dan transaksi pembayaran.
+Sistem informasi pembayaran SPP siswa berbasis web menggunakan PHP dan MySQL untuk membantu pengelolaan data siswa dan transaksi pembayaran.
 
 ## Fitur
 
-- **Login System**: Autentikasi pengguna dengan level akses (admin, petugas, siswa)
-- **Dashboard**: Ringkasan statistik data
-- **Manajemen Kelas**: CRUD data kelas dan kompetensi keahlian
-- **Manajemen SPP**: CRUD data SPP dengan tahun dan nominal
-- **Manajemen Petugas**: CRUD data petugas dengan level akses
-- **Manajemen Siswa**: CRUD data siswa lengkap
-- **Pembayaran**: Input dan kelola transaksi pembayaran SPP
-- **Cek Pembayaran**: Monitoring status pembayaran siswa dengan pencarian berdasarkan NISN atau Nama
+- Login multi user (admin, petugas, siswa)
+- Dashboard statistik data
+- CRUD data kelas
+- CRUD data siswa
+- CRUD data petugas
+- CRUD data SPP
+- Transaksi pembayaran SPP
+- Monitoring status pembayaran
 
 ## Struktur Database
 
@@ -70,7 +70,7 @@ Aplikasi ini digunakan untuk mengelola pembayaran SPP siswa, termasuk manajemen 
 
 ## Persyaratan Sistem
 
-- XAMPP (Apache + MySQL)
+- LARAGON (Apache + MySQL)
 - PHP 7.4 atau lebih tinggi
 - MySQL/MariaDB
 - Web browser modern (Chrome, Firefox, Edge)
@@ -148,10 +148,10 @@ SPP-Siswa/
 
 ## Teknologi yang Digunakan
 
-- **Backend**: PHP Native
-- **Database**: MySQL/MariaDB
-- **Frontend**: HTML5, CSS3, Bootstrap 5
-- **Icons**: Font Awesome 6
+- PHP Native
+- MySQL
+- Bootstrap
+- LARAGON
 
 ## Catatan
 
