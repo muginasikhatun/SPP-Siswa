@@ -80,10 +80,10 @@ Sistem informasi pembayaran SPP siswa berbasis web menggunakan PHP dan MySQL unt
 1. **Copy folder project** ke `C:\laragon\www\SPP-Siswa` (jika menggunakan Laragon) atau `C:\xampp\htdocs\SPP-Siswa` (jika menggunakan XAMPP)
 
 2. **Buka phpMyAdmin** dan buat database baru:
-   - Nama database: `spp_siswa`
+   - Nama database: `db_spp `
 
 3. **Import database**:
-   - Buka file `database/spp_siswa.sql` di phpMyAdmin
+   - Buka file `database/db_spp.sql` di phpMyAdmin
    - Atau jalankan perintah SQL secara manual
 
 4. **Import data uji coba** (opsional):
@@ -107,7 +107,7 @@ Sistem informasi pembayaran SPP siswa berbasis web menggunakan PHP dan MySQL unt
 Aplikasi sudah dilengkapi dengan data uji coba:
 
 ### Master Data (5 baris per tabel)
-- **Kelas**: 5 kelas (X RPL 1, X RPL 2, XI TKJ 1, XI TKJ 2, XII MM 1)
+- **Kelas**: 5 kelas 
 - **SPP**: 5 data SPP dengan nominal berbeda
 - **Petugas**: 5 petugas dengan berbagai level akses
 - **Siswa**: 5 siswa dengan data lengkap
